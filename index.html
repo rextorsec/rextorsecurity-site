@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rextor Security — compiling…</title>
+<meta name="description" content="Rextor Security — the firm behind Rextor Audit. Something is being built here. Stay tuned.">
+<meta property="og:title" content="Rextor Security — compiling…">
+<meta property="og:description" content="The firm behind Rextor Audit. Under active development.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#050807">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rextorsecurity.com/">
+<meta property="og:title" content="Rextor Security — compiling…">
+<meta property="og:description" content="The firm behind Rextor Audit. This surface is being forged by REXTOR. Whitehat ops only.">
+<meta property="og:image" content="https://rextorsecurity.com/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="REXTOR terminal wordmark — REXTORSECURITY.COM under active development, forged by REXTOR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rextor Security — compiling…">
+<meta name="twitter:description" content="The firm behind Rextor Audit. This surface is being forged by REXTOR. Whitehat ops only.">
+<meta name="twitter:image" content="https://rextorsecurity.com/og-card.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23050807'/><text x='2' y='12' font-size='11' fill='%2300ff41' font-family='monospace'>&gt;_</text></svg>">
+<style>
+  :root {
+    --bg: #050807;
+    --bg-rgb: 5, 8, 7;
+    --fg: #00ff41;
+    --fg-dim: #0e7a2f;
+    --fg-faint: #0a3d1c;
+    --amber: #ffb000;
+    --red: #ff2a2a;
+    --panel: rgba(var(--glow-rgb), 0.04);
+    --border: rgba(var(--glow-rgb), 0.25);
+    --glow-rgb: 0, 255, 65;
+  }
+  /* Omarchy community themes: Gruvbox Material, Tokyo Night OLED, Dracula */
+  html[data-theme="gruvbox"] {
+    --bg: #282828; --bg-rgb: 40, 40, 40;
+    --fg: #d4be98; --fg-dim: #a89984; --fg-faint: #665c54;
+    --amber: #d8a657; --red: #ea6962; --glow-rgb: 169, 182, 101;
+  }
+  html[data-theme="tokyo-night"] {
+    --bg: #16161e; --bg-rgb: 22, 22, 30;
+    --fg: #c0caf5; --fg-dim: #565f89; --fg-faint: #292e42;
+    --amber: #e0af68; --red: #f7768e; --glow-rgb: 122, 162, 247;
+  }
+  html[data-theme="dracula"] {
+    --bg: #282a36; --bg-rgb: 40, 42, 54;
+    --fg: #f8f8f2; --fg-dim: #6272a4; --fg-faint: #44475a;
+    --amber: #ffb86c; --red: #ff5555; --glow-rgb: 189, 147, 249;
+  }
+  ::selection { background: rgba(var(--glow-rgb), 0.3); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* CRT scanlines + vignette */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 2px,
+      rgba(0, 0, 0, 0.18) 3px, rgba(0, 0, 0, 0.18) 4px
+    );
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  }
+  #rain {
+    position: fixed; inset: 0;
+    z-index: 0;
+    opacity: 0.16;
+    pointer-events: none;
+  }
+  .wrap {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+    gap: 1.6rem;
+    max-width: 980px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  pre.ascii {
+    font-size: clamp(7px, 1.55vw, 15px);
+    line-height: 1.05;
+    color: var(--fg);
+    text-shadow: 0 0 8px rgba(var(--glow-rgb), 0.45);
+    user-select: none;
+    white-space: pre;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute; inset: 0;
+    overflow: hidden;
+    opacity: 0;
+  }
+  .glitch::before { color: var(--amber); z-index: -1; }
+  .glitch::after { color: var(--red); z-index: -2; }
+  .glitch.on::before { opacity: 0.85; transform: translate(2px, -1px); clip-path: inset(0 0 55% 0); }
+  .glitch.on::after  { opacity: 0.85; transform: translate(-2px, 1px); clip-path: inset(55% 0 0 0); }
+
+  #boot {
+    width: min(640px, 100%);
+    font-size: clamp(11px, 1.6vw, 13.5px);
+    line-height: 1.75;
+    color: var(--fg-dim);
+    min-height: 8.75em; /* reserves 5 lines — no layout shift while typing */
+    text-align: left;
+  }
+  #boot .ok { color: var(--fg); }
+  #boot .warn { color: var(--amber); }
+  .cursor {
+    display: inline-block;
+    width: 0.6em; height: 1.15em;
+    background: var(--fg);
+    vertical-align: text-bottom;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  main {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+    align-items: center;
+  }
+  h1 {
+    font-size: clamp(1.15rem, 3.4vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 12px rgba(var(--glow-rgb), 0.5);
+  }
+  .statusline {
+    font-size: clamp(11px, 1.7vw, 14px);
+    color: var(--fg-dim);
+  }
+  .statusline .stat { display: inline-block; white-space: nowrap; }
+  .statusline b { color: var(--amber); font-weight: 700; }
+  .copy {
+    max-width: 62ch;
+    font-size: clamp(12.5px, 1.9vw, 15px);
+    line-height: 1.8;
+    color: var(--fg);
+    opacity: 0.92;
+  }
+  .copy .hl {
+    color: var(--amber);
+    border-bottom: 1px dashed var(--amber);
+  }
+  #quote {
+    width: min(640px, 100%);
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 1.1rem 1.4rem;
+    text-align: left;
+    font-size: clamp(12px, 1.8vw, 14px);
+    line-height: 1.7;
+    transition: opacity 0.4s ease;
+  }
+  #quote.fading { opacity: 0; }
+  #quote .q::before { content: "> "; color: var(--fg-dim); }
+  #quote .a {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--fg-dim);
+    font-size: 0.85em;
+    text-align: right;
+  }
+  .cta {
+    display: inline-block;
+    margin-top: 0.2rem;
+    padding: 0.7rem 1.5rem;
+    border: 1px solid var(--fg);
+    color: var(--fg);
+    text-decoration: none;
+    font-size: clamp(12px, 1.8vw, 14px);
+    letter-spacing: 0.05em;
+    transition: all 0.18s ease;
+    box-shadow: 0 0 0 rgba(var(--glow-rgb), 0);
+  }
+  .cta:hover {
+    background: var(--fg);
+    color: var(--bg);
+    box-shadow: 0 0 24px rgba(var(--glow-rgb), 0.55);
+  }
+  #theme-btn {
+    position: fixed;
+    top: 0.9rem; right: 0.9rem;
+    z-index: 4;
+    font-family: inherit;
+    font-size: clamp(10px, 1.5vw, 12px);
+    letter-spacing: 0.04em;
+    color: var(--fg-dim);
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  #theme-btn:hover { color: var(--fg); border-color: var(--fg); }
+  #theme-btn:focus-visible { outline: 1px dashed var(--fg); outline-offset: 2px; }
+  footer.bar {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.6);
+    font-size: clamp(10px, 1.5vw, 12px);
+    color: var(--fg-dim);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.6rem;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+  }
+  footer.bar .live { color: var(--fg); }
+  footer.bar a { color: var(--fg-dim); text-decoration: none; }
+  footer.bar a:hover { color: var(--fg); text-decoration: underline; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; }
+    #rain { display: none; }
+    .glitch::before, .glitch::after { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<button id="theme-btn" type="button" aria-label="Cycle color theme">[ theme: <span id="theme-name">MATRIX</span> ]</button>
+
+<div class="wrap">
+  <pre class="ascii" aria-label="REXTOR">
+██████╗ ███████╗██╗  ██╗████████╗ ██████╗ ██████╗
+██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔══██╗
+██████╔╝█████╗   ╚███╔╝    ██║   ██║   ██║██████╔╝
+██╔══██╗██╔══╝   ██╔██╗    ██║   ██║   ██║██╔══██╗
+██║  ██║███████╗██╔╝ ██╗   ██║   ╚██████╔╝██║  ██║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+  </pre>
+
+  <div id="boot" aria-live="polite"></div>
+
+  <main>
+    <h1><span class="glitch" data-text="REXTORSECURITY.COM">REXTORSECURITY.COM</span></h1>
+    <p class="statusline"><span class="stat">status: <b>UNDER ACTIVE DEVELOPMENT</b></span> <span class="stat">· visibility: <b>PUBLIC SOON</b></span></p>
+    <p class="copy">
+      // this surface is being forged by <span class="hl">REXTOR</span> —<br>
+      the firm behind <a href="https://rextoraudit.com" style="color:inherit">rextoraudit.com</a>.<br>
+      whitehat ops only. no exploits were harmed in the making of this domain.
+    </p>
+    <div id="quote"><span class="q" id="q-text"></span><span class="a" id="q-author"></span></div>
+    <a class="cta" href="https://rextoraudit.com">&gt; meanwhile, the machine is already hunting_</a>
+  </main>
+</div>
+
+<footer class="bar">
+  <span>mode: <span class="live">WHITEHAT</span></span>
+  <span>target: <span class="live">REXTORSECURITY.COM</span></span>
+  <span>uptime: <span class="live" id="uptime">00:00:00</span></span>
+  <span>contact: <a href="mailto:rector@rectorspace.com">rector@rectorspace.com</a></span>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- boot sequence ---------- */
+  var bootLines = [
+    { t: "$ ssh guest@rextorsecurity.com", c: "" },
+    { t: "[ OK ] handshake accepted — you are expected", c: "ok" },
+    { t: "[ OK ] mounting /dev/curiosity ....... done", c: "ok" },
+    { t: "[ OK ] loading exploit corpus ........ done", c: "ok" },
+    { t: "[ .. ] deploying payloads ... skipped: whitehat mode", c: "warn" },
+    { t: "[ OK ] access granted. watch this space.", c: "ok" }
+  ];
+  var bootEl = document.getElementById("boot");
+  function typeLine(i) {
+    if (i >= bootLines.length) {
+      bootEl.innerHTML = bootLines.map(function (l) {
+        return '<span class="' + l.c + '">' + l.t.replace(/</g, "&lt;") + "</span>";
+      }).join("<br>") + '<br><span style="color:var(--fg-dim)">guest@rextorsecurity.com:~$ </span><span class="cursor"></span>';
+      return;
+    }
+    var line = bootLines[i];
+    var span = document.createElement("span");
+    span.className = line.c;
+    bootEl.appendChild(span);
+    if (i > 0) bootEl.insertBefore(document.createElement("br"), span);
+    var pos = 0;
+    (function tick() {
+      if (reduced) { span.textContent = line.t; typeLine(i + 1); return; }
+      if (pos <= line.t.length) {
+        span.textContent = line.t.slice(0, pos++);
+        setTimeout(tick, line.c === "" ? 26 : 9);
+      } else { typeLine(i + 1); }
+    })();
+  }
+  typeLine(0);
+
+  /* ---------- rotating whitehat quotes ---------- */
+  var quotes = [
+    { q: "The quieter you become, the more you are able to hear.", a: "— Ram Dass (adopted by hacker culture)" },
+    { q: "Given enough eyeballs, all bugs are shallow.", a: "— Linus's Law, Eric S. Raymond" },
+    { q: "Amateurs hack systems, professionals hack people.", a: "— Bruce Schneier" },
+    { q: "The only truly secure system is one that is powered off, cast in a block of concrete and sealed in a lead-lined room with armed guards.", a: "— Gene Spafford" },
+    { q: "Companies spend millions on firewalls and encryption, and it's money wasted — none of it addresses the weakest link in the security chain.", a: "— Kevin Mitnick" },
+    { q: "Exploits exist because assumptions do.", a: "// rextor/local" },
+    { q: "Never trust input you didn't exploit yourself.", a: "// rextor/local" },
+    { q: "We break things — so the people who rely on them don't have to.", a: "// rextor/local" }
+  ];
+  var qText = document.getElementById("q-text");
+  var qAuthor = document.getElementById("q-author");
+  var quoteBox = document.getElementById("quote");
+  var idx = Math.floor(Math.random() * quotes.length);
+  function showQuote() {
+    qText.textContent = quotes[idx].q;
+    qAuthor.textContent = quotes[idx].a;
+    idx = (idx + 1) % quotes.length;
+  }
+  showQuote();
+  if (!reduced) {
+    setInterval(function () {
+      quoteBox.classList.add("fading");
+      setTimeout(function () { showQuote(); quoteBox.classList.remove("fading"); }, 420);
+    }, 7000);
+  }
+
+  /* ---------- glitch pulses ---------- */
+  var glitchEl = document.querySelector(".glitch");
+  if (!reduced) {
+    (function pulse() {
+      glitchEl.classList.add("on");
+      setTimeout(function () { glitchEl.classList.remove("on"); }, 140);
+      setTimeout(pulse, 3200 + Math.random() * 3600);
+    })();
+  }
+
+  /* ---------- uptime counter ---------- */
+  var upEl = document.getElementById("uptime");
+  var t0 = Date.now();
+  setInterval(function () {
+    var s = Math.floor((Date.now() - t0) / 1000);
+    var pad = function (n) { return String(n).padStart(2, "0"); };
+    upEl.textContent = pad(Math.floor(s / 3600)) + ":" + pad(Math.floor(s / 60) % 60) + ":" + pad(s % 60);
+  }, 1000);
+
+  /* ---------- theme engine: daily rotation + toggle ---------- */
+  /* Alternates are Omarchy community themes: https://omarchy.org/themes/ */
+  var THEMES = ["matrix", "gruvbox", "tokyo-night", "dracula"];
+  var THEME_LABEL = { "matrix": "MATRIX", "gruvbox": "GRUVBOX", "tokyo-night": "TOKYO NIGHT", "dracula": "DRACULA" };
+  var rainGlyph = "#00ff41", rainFade = "rgba(5, 8, 7, 0.12)";
+  function refreshRainColors() {
+    var cs = getComputedStyle(document.documentElement);
+    rainGlyph = cs.getPropertyValue("--fg").trim() || rainGlyph;
+    rainFade = "rgba(" + (cs.getPropertyValue("--bg-rgb").trim() || "5,8,7") + ", 0.12)";
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", cs.getPropertyValue("--bg").trim());
+  }
+  function todayKey() { return Math.floor(Date.now() / 86400000); }
+  function storedTheme() {
+    try {
+      var s = JSON.parse(localStorage.getItem("rs-theme") || "null");
+      return (s && s.d === todayKey() && THEMES.indexOf(s.t) >= 0) ? s.t : null;
+    } catch (e) { return null; }
+  }
+  function persistTheme(t) {
+    try { localStorage.setItem("rs-theme", JSON.stringify({ t: t, d: todayKey() })); } catch (e) {}
+  }
+  var qsTheme = new URLSearchParams(location.search).get("theme");
+  var currentTheme = (qsTheme && THEMES.indexOf(qsTheme) >= 0) ? qsTheme
+    : (storedTheme() || THEMES[todayKey() % THEMES.length]);
+  var themeNameEl = document.getElementById("theme-name");
+  function applyTheme(t, save) {
+    document.documentElement.setAttribute("data-theme", t);
+    themeNameEl.textContent = THEME_LABEL[t];
+    refreshRainColors();
+    if (save) persistTheme(t);
+  }
+  applyTheme(currentTheme, false);
+  document.getElementById("theme-btn").addEventListener("click", function () {
+    var i = (THEMES.indexOf(document.documentElement.getAttribute("data-theme")) + 1) % THEMES.length;
+    applyTheme(THEMES[i], true);
+  });
+
+  /* ---------- matrix rain (subtle) ---------- */
+  var canvas = document.getElementById("rain");
+  if (!reduced && canvas.getContext) {
+    var ctx = canvas.getContext("2d");
+    var chars = "01ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ$#@%&*+=<>".split("");
+    var drops = [];
+    function size() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      var cols = Math.floor(canvas.width / 16);
+      drops.length = cols;
+      for (var i = 0; i < cols; i++) drops[i] = Math.floor(Math.random() * canvas.height / 16);
+    }
+    size();
+    window.addEventListener("resize", size);
+    setInterval(function () {
+      ctx.fillStyle = "rgba(5, 8, 7, 0.12)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#00ff41";
+      ctx.font = "13px JetBrains Mono, monospace";
+      for (var i = 0; i < drops.length; i++) {
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, drops[i] * 16);
+        if (drops[i] * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }, 66);
+  }
+})();
+</script>
+</body>
+</html>

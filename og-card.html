@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px;
+    background: #050807;
+    color: #00ff41;
+    font-family: "JetBrains Mono", monospace;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 28px;
+  }
+  .glyphfield {
+    position: absolute; inset: 0;
+    color: rgba(0, 255, 65, 0.10);
+    font-size: 22px; line-height: 30px;
+    word-break: break-all;
+    padding: 6px 2px;
+    user-select: none;
+  }
+  .frame {
+    position: absolute; inset: 22px;
+    border: 1px solid rgba(0, 255, 65, 0.35);
+    pointer-events: none;
+  }
+  .corner { position: absolute; font-size: 26px; color: #00ff41; }
+  .tl { top: 10px; left: 14px; } .tr { top: 10px; right: 14px; }
+  .bl { bottom: 10px; left: 14px; } .br { bottom: 10px; right: 14px; }
+  pre.ascii {
+    position: relative;
+    font-size: 36px; line-height: 1.06;
+    color: #00ff41;
+    text-shadow: 0 0 14px rgba(0, 255, 65, 0.55);
+    white-space: pre;
+  }
+  h1 {
+    position: relative;
+    font-size: 52px; letter-spacing: 0.06em;
+    text-shadow: 0 0 16px rgba(0, 255, 65, 0.5);
+  }
+  .line {
+    position: relative;
+    font-size: 26px; color: #0e7a2f;
+  }
+  .line b { color: #ffb000; font-weight: 700; }
+  .promptline {
+    position: relative;
+    font-size: 24px; color: #0e7a2f;
+  }
+  .promptline .p { color: #00ff41; }
+  .cursor {
+    display: inline-block;
+    width: 13px; height: 26px;
+    background: #00ff41;
+    vertical-align: text-bottom;
+  }
+  .tag {
+    position: absolute; bottom: 34px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px; color: #0e7a2f; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="glyphfield" id="gf"></div>
+<div class="frame"></div>
+<span class="corner tl">┌</span><span class="corner tr">┐</span><span class="corner bl">└</span><span class="corner br">┘</span>
+<pre class="ascii">
+██████╗ ███████╗██╗  ██╗████████╗ ██████╗ ██████╗
+██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔═══██╗██╔══██╗
+██████╔╝█████╗   ╚███╔╝    ██║   ██║   ██║██████╔╝
+██╔══██╗██╔══╝   ██╔██╗    ██║   ██║   ██║██╔══██╗
+██║  ██║███████╗██╔╝ ██╗   ██║   ╚██████╔╝██║  ██║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+</pre>
+<h1>REXTORSECURITY.COM</h1>
+<div class="line">status: <b>UNDER ACTIVE DEVELOPMENT</b> — forged by REXTOR</div>
+<div class="promptline"><span class="p">guest@rextorsecurity.com:~$</span> watch this space<span class="cursor"></span></div>
+<div class="tag">whitehat ops only · the firm behind rextoraudit.com</div>
+<script>
+  // deterministic pseudo-rain backdrop
+  var chars = "01ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ$#@%&*+=<>".split("");
+  var seed = 1337;
+  function rnd() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+  var out = "";
+  for (var i = 0; i < 1400; i++) out += chars[Math.floor(rnd() * chars.length)];
+  document.getElementById("gf").textContent = out;
+</script>
+</body>
+</html>
