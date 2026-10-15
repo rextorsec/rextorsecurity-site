@@ -427,9 +427,9 @@
     size();
     window.addEventListener("resize", size);
     setInterval(function () {
-      ctx.fillStyle = "rgba(5, 8, 7, 0.12)";
+      ctx.fillStyle = rainFade;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#00ff41";
+      ctx.fillStyle = rainGlyph;
       ctx.font = "13px JetBrains Mono, monospace";
       for (var i = 0; i < drops.length; i++) {
         ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, drops[i] * 16);
